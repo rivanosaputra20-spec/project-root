@@ -2,14 +2,26 @@
 
 use CodeIgniter\Router\RouteCollection;
 
-/**
- * @var RouteCollection $routes
- */
+/** @var RouteCollection $routes */
 
-$routes->get('/', 'Home::form');        // pertama kali buka → form
-$routes->post('/process', 'Home::process'); // submit form
-$routes->get('/home', 'Home::index');   // halaman home setelah login
+$routes->get('login', 'Auth::login');
+$routes->post('login/proses', 'Auth::prosesLogin');
+$routes->get('logout', 'Auth::logout');
 
-$routes->get('/routing', 'Home::routing');
-$routes->get('/controller', 'Home::controller');
-$routes->get('/view', 'Home::view');
+// Grup yang harus login
+$routes->group('', ['filter' => 'auth'], function($routes) {
+    $routes->get('/', 'Home::index');
+    
+    // Transaksi
+    $routes->get('transaksi', 'Transaksi::index');
+    $routes->get('transaksi/create', 'Transaksi::create');
+    $routes->post('transaksi/store', 'Transaksi::store');
+
+    // Pelanggan
+    $routes->get('pelanggan', 'Pelanggan::index');
+
+    // Grup khusus Admin (Hanya bisa dibuka jika role == admin)
+    $routes->group('produk', ['filter' => 'auth:admin'], function($routes) {
+        $routes->get('/', 'Produk::index');
+    });
+});

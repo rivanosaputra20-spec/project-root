@@ -2,67 +2,37 @@
 
 namespace App\Controllers;
 
+use App\Models\ProdukModel;
+
 class Home extends BaseController
 {
-    // ===== TAMBAHAN FORM (BARU) =====
-    public function form()
-    {
-        return view('form');
-    }
-
-    public function process()
-    {
-        $nama  = $this->request->getPost('nama');
-        $email = $this->request->getPost('email');
-
-        // kirim nama ke home
-        return view('home', [
-            'nama' => $nama,
-            'email' => $email
-        ]);
-    }
-    // ===== END TAMBAHAN =====
-
-
+    /**
+     * Halaman Dashboard Utama
+     */
     public function index()
     {
-        return view('home');
-    }
+        // Jika belum login, redirect ke login (opsional, sudah dijaga filter)
+        if (!session()->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
 
-    public function routing()
-    {
-        return view('routing');
-    }
-
-    public function controller()
-    {
+        $produkModel = new ProdukModel();
+        
         $data = [
-            'title' => 'Halaman Controller - Data Mahasiswa',
-            'mahasiswa' => [
-                [
-                    'nama'  => 'Mirha jhapran',
-                    'nim'   => '001',
-                    'prodi' => 'Informatika'
-                ],
-                [
-                    'nama'  => 'Rifa plenger',
-                    'nim'   => '002',
-                    'prodi' => 'Sistem Informasi'
-                ],
-                [
-                    'nama'  => 'faiq alkatiri',
-                    'nim'   => '003',
-                    'prodi' => 'Teknik Komputer'
-                ],
-            ]
+            'title'          => 'Dashboard - Kopi Kita',
+            'user'           => session()->get('username'),
+            'produk_populer' => $produkModel->findAll(), // Ambil 4 produk saja
         ];
 
-        return view('controller', $data);
+       
+        return view('dashboard/index', $data);
     }
 
-    public function view()
+    
+    
+    public function logout()
     {
-        return view('view_page');
+        session()->destroy();
+        return redirect()->to('/login');
     }
-
 }
