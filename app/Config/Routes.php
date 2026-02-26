@@ -32,4 +32,8 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     // --- Rute PELANGGAN ---
     $routes->get('pelanggan', 'Pelanggan::index');
     $routes->post('produk/update/(:num)', 'Produk::update/$1');
+    // Rute Profile
+    $routes->get('profile', 'Profile::index');
+    $routes->post('profile/updateFoto', 'Profile::updateFoto');
+    $routes->post('profile/updatePassword', 'Profile::updatePassword');
 });
