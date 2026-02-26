@@ -83,6 +83,49 @@
     </div>
 </div>
 
+<div id="nota-print" class="d-none">
+    <div style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 10px; color: black !important; background: white !important;">
+        <div style="text-align: center;">
+            <h3 style="margin: 0;">KOPI KITA</h3>
+            <p style="font-size: 12px;">Bekasi, Indonesia<br>--------------------------------</p>
+        </div>
+        <div id="nota-info" style="font-size: 12px;"></div>
+        <p>--------------------------------</p>
+        <div id="nota-items" style="font-size: 12px;"></div>
+        <p>--------------------------------</p>
+        <div id="nota-total" style="font-size: 14px; font-weight: bold;"></div>
+        <p style="text-align: center; font-size: 10px; margin-top: 20px;">Terima kasih atas kunjungannya!</p>
+    </div>
+</div>
+
+<style>
+@media print {
+    /* Sembunyikan semua elemen di layar utama */
+    body * { 
+        visibility: hidden; 
+    }
+    /* Tampilkan HANYA area nota-print */
+    #nota-print, #nota-print * { 
+        visibility: visible !important; 
+    }
+    /* Atur posisi nota agar berada di pojok kiri atas kertas */
+    #nota-print { 
+        position: fixed; 
+        left: 0; 
+        top: 0; 
+        width: 80mm; 
+        background-color: white !important;
+        color: black !important;
+        display: block !important;
+    }
+    /* Menghilangkan header/footer otomatis browser (tanggal & url di pojok kertas) */
+    @page { 
+        size: auto; 
+        margin: 0mm; 
+    }
+}
+</style>
+
 <script>
 let keranjang = [];
 let metodeBayar = 'QRIS';
@@ -103,7 +146,7 @@ function updateTampilan() {
             <div class="d-flex justify-content-between align-items-center mb-3 text-white">
                 <div>
                     <h6 class="mb-0 small fw-bold">${item.nama}</h6>
-                    <small class="text-muted">1 x Rp ${item.harga.toLocaleString()}</small>
+                    <small class="text-muted">1 x Rp ${item.harga.toLocaleString('id-ID')}</small>
                 </div>
                 <button class="btn btn-sm text-danger" onclick="hapusItem(${index})"><i class="fas fa-times"></i></button>
             </div>
@@ -132,13 +175,34 @@ function setMetode(metode, element) {
 }
 
 function prosesBayar() {
-    if(keranjang.length === 0) return alert('Pilih menu dulu dong!');
+    if(keranjang.length === 0) return alert('Pilih menu dulu!');
     
+    // Ambil elemen nota
+    const notaInfo = document.getElementById('nota-info');
+    const notaItems = document.getElementById('nota-items');
+    const notaTotal = document.getElementById('nota-total');
+
+    if (!notaInfo || !notaItems || !notaTotal) {
+        return alert('Error: Elemen nota tidak ditemukan di HTML!');
+    }
+
     const pelanggan = document.getElementById('customer_id').options[document.getElementById('customer_id').selectedIndex].text;
     const total = document.getElementById('total-akhir').innerText;
 
-    alert(`Pesanan Berhasil!\nPelanggan: ${pelanggan}\nTotal: ${total}\nMetode: ${metodeBayar}`);
-    location.reload(); 
+    // Isi data
+    notaInfo.innerHTML = `Tgl: ${new Date().toLocaleString('id-ID')}<br>Plg: ${pelanggan}`;
+    
+    let html = '';
+    keranjang.forEach(item => {
+        html += `<div style="display:flex; justify-content:space-between"><span>${item.nama}</span><span>${Number(item.harga).toLocaleString('id-ID')}</span></div>`;
+    });
+    notaItems.innerHTML = html;
+    notaTotal.innerHTML = `<div style="display:flex; justify-content:space-between; border-top:1px dashed #00; margin-top:5px"><b>TOTAL</b><b>${total}</b></div>`;
+
+    // Munculkan print
+    setTimeout(() => {
+        window.print();
+    }, 500);
 }
 </script>
 <?= $this->endSection() ?>

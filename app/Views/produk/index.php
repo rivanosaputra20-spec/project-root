@@ -6,9 +6,9 @@
         <h2 class="fw-bold">Menu Gallery</h2>
         <p class="text-muted">Kelola varian rasa dan harga produk Anda.</p>
     </div>
-    <button class="btn btn-warning fw-bold px-4 rounded-pill">
-        <i class="fas fa-plus me-2"></i> Tambah Menu
-    </button>
+    <button type="button" class="btn btn-warning fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#modalTambahMenu">
+    + Tambah Menu
+</button>
 </div>
 
 <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
