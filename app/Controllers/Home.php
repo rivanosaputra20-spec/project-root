@@ -3,36 +3,37 @@
 namespace App\Controllers;
 
 use App\Models\ProdukModel;
+use App\Models\TransaksiModel;
 
 class Home extends BaseController
 {
-    /**
-     * Halaman Dashboard Utama
-     */
     public function index()
     {
-        // Jika belum login, redirect ke login (opsional, sudah dijaga filter)
         if (!session()->get('isLoggedIn')) {
             return redirect()->to('/login');
         }
 
+        $transaksiModel = new TransaksiModel();
         $produkModel = new ProdukModel();
+
+        // Menggunakan try-catch atau pengecekan manual untuk menghindari error column
+        $revenueData = $transaksiModel->selectSum('total_harga')->first();
         
         $data = [
-            'title'          => 'Dashboard - Kopi Kita',
-            'user'           => session()->get('username'),
-            'produk_populer' => $produkModel->findAll(), // Ambil 4 produk saja
+            'title'         => 'Dashboard Overview',
+            'user'          => session()->get('username'),
+            'role'          => session()->get('role'),
+            'totalRevenue'  => $revenueData['total_harga'] ?? 0,
+            'totalOrders'   => $transaksiModel->countAll(),
+            'totalProducts' => $produkModel->countAll(),
+            'recentOrders'  => $transaksiModel->orderBy('created_at', 'DESC')->findAll(5),
+            'topProducts'   => $produkModel->orderBy('stok', 'ASC')->findAll(4)
         ];
 
-       
-        return view('dashboard/index', $data);
-    }
+        if (session()->get('role') == 'admin') {
+            return view('dashboard/admin_index', $data);
+        }
 
-    
-    
-    public function logout()
-    {
-        session()->destroy();
-        return redirect()->to('/login');
+        return view('dashboard/index', $data);
     }
 }

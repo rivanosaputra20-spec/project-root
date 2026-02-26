@@ -6,8 +6,8 @@ use CodeIgniter\Model;
 
 class ProdukModel extends Model
 {
-    protected $table      = 'products'; // Sesuaikan dengan yang ada di phpMyAdmin
-    protected $primaryKey = 'id';
-    // Masukkan semua kolom baru agar bisa dibaca/ditulis
-    protected $allowedFields = ['nama_produk', 'kategori', 'harga', 'deskripsi', 'image', 'stok'];
+    protected $table            = 'products';
+    protected $primaryKey       = 'id';
+    // WAJIB: Tambahkan 'stok' di sini agar bisa di-update
+    protected $allowedFields    = ['nama_produk', 'kategori', 'harga', 'stok', 'deskripsi', 'image'];
 }

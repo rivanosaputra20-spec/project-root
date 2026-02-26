@@ -4,52 +4,32 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 
+// Rute Publik (Bisa diakses tanpa login)
 $routes->get('login', 'Auth::login');
 $routes->post('login/proses', 'Auth::prosesLogin');
 $routes->get('logout', 'Auth::logout');
 
-// Grup yang harus login
+// Grup yang harus login (Filter 'auth' menjaga semua rute di dalam)
 $routes->group('', ['filter' => 'auth'], function($routes) {
+    
+    // Dashboard Utama
     $routes->get('/', 'Home::index');
+
+    // --- Rute MENU / PRODUK ---
+    // User & Admin bisa lihat menu
+    $routes->get('produk', 'Produk::index'); 
     
-    // Menu routes
-    $routes->get('menu', 'Menu::index');
-    $routes->get('menu/tambah', 'Menu::tambah');
-    $routes->post('menu/simpan', 'Menu::simpan');
-    
-    // Transaksi
+    // Fitur Tambah, Update, Hapus (Hanya Admin - Filter 'auth:admin')
+    $routes->post('produk/save', 'Produk::save');
+    $routes->post('produk/update/(:num)', 'Produk::update/$1');
+    $routes->get('produk/hapus/(:num)', 'Produk::hapus/$1');
+
+    // --- Rute TRANSAKSI ---
     $routes->get('transaksi', 'Transaksi::index');
     $routes->get('transaksi/create', 'Transaksi::create');
     $routes->post('transaksi/store', 'Transaksi::store');
 
-    // Menambahkan Produk admin only
-    $routes->get('/produk', 'Produk::index');
-    $routes->post('/produk/save', 'Produk::save');
-    // Pelanggan
+    // --- Rute PELANGGAN ---
     $routes->get('pelanggan', 'Pelanggan::index');
-
-    // Grup khusus Admin (Hanya bisa dibuka jika role == admin)
-    $routes->group('produk', ['filter' => 'auth:admin'], function($routes) {
-        $routes->get('/', 'Produk::index');
-
-        $routes->group('', ['filter' => 'auth'], function($routes) {
-    $routes->get('/', 'Home::index');
-    
-    // Menu & Produk (Disatukan ke Menu Controller agar tidak bingung)
-    $routes->get('menu', 'Menu::index');
-    $routes->get('menu/tambah', 'Menu::tambah');
-    $routes->post('menu/simpan', 'Menu::simpan');
-    $routes->get('menu/edit/(:num)', 'Menu::edit/$1');
-    $routes->post('menu/update/(:num)', 'Menu::update/$1');
-    $routes->get('menu/hapus/(:num)', 'Menu::hapus/$1');
-
-    // Transaksi
-    $routes->get('transaksi', 'Transaksi::index');
-    $routes->get('transaksi/create', 'Transaksi::create');
-    $routes->post('transaksi/store', 'Transaksi::store');
-
-    // Pelanggan
-    $routes->get('pelanggan', 'Pelanggan::index');
-});
-    });
+    $routes->post('produk/update/(:num)', 'Produk::update/$1');
 });
