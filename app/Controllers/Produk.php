@@ -9,22 +9,21 @@ class Produk extends BaseController
     protected $produkModel;
 
     public function __construct() {
-        // Inisialisasi model agar bisa digunakan di semua fungsi
         $this->produkModel = new ProdukModel();
     }
 
     public function index() {
         $session = session();
         
-        // Memastikan hanya user login yang bisa akses
+        // Proteksi: Cek apakah sudah login
         if (!$session->get('isLoggedIn')) {
             return redirect()->to('/login');
         }
 
         $data = [
             'title'    => 'Menu Gallery',
-            'produk'   => $this->produkModel->findAll(), // Ambil semua data produk
-            'kategori' => ['Coffee', 'Non-Coffee', 'Pastry', 'Snack'], // Variabel filter kategori
+            'produk'   => $this->produkModel->findAll(),
+            'kategori' => ['Coffee', 'Non-Coffee', 'Pastry', 'Snack'],
             'role'     => $session->get('role'), 
             'username' => $session->get('username')
         ];
@@ -32,13 +31,17 @@ class Produk extends BaseController
         return view('produk/index', $data);
     }
 
-    // Menangani penyimpanan menu baru
     public function save() {
+        // Proteksi Role: Hanya Admin
+        if (session()->get('role') !== 'admin') {
+            return redirect()->to('/produk')->with('error', 'Akses ditolak!');
+        }
+
         $file = $this->request->getFile('image');
+        // Gunakan default.png agar sinkron dengan database kamu
+        $namaGambar = ($file && $file->isValid() && !$file->hasMoved()) ? $file->getRandomName() : 'default.png';
         
-        // Cek apakah ada file yang diupload
-        $namaGambar = ($file && $file->isValid()) ? $file->getRandomName() : 'default.jpg';
-        if($file && $file->isValid()) {
+        if($file && $file->isValid() && !$file->hasMoved()) {
             $file->move('uploads/menu', $namaGambar);
         }
 
@@ -54,36 +57,42 @@ class Produk extends BaseController
         return redirect()->to('/produk')->with('success', 'Menu berhasil ditambahkan!');
     }
 
-    /**
-     * FUNGSI BARU: Update Harga & Stok (Untuk Admin)
-     * Dipanggil melalui form modal edit di produk/index.php
-     */
     public function update($id) {
-        // Proteksi role admin (Keamanan tambahan)
         if (session()->get('role') !== 'admin') {
             return redirect()->to('/produk')->with('error', 'Akses ditolak!');
         }
 
-       $data = [
-        'harga' => $this->request->getPost('harga'),
-        'stok'  => $this->request->getPost('stok'),
-    ];
+        $data = [
+            'harga' => $this->request->getPost('harga'),
+            'stok'  => $this->request->getPost('stok'),
+        ];
 
-    $this->produkModel->update($id, $data);
-    return redirect()->to('/produk')->with('success', 'Data menu berhasil diperbarui!');
+        $this->produkModel->update($id, $data);
+        return redirect()->to('/produk')->with('success', 'Data menu diperbarui!');
     }
 
-    // Menghapus menu
-    public function hapus($id) {
-        // Cari data produk untuk menghapus gambarnya juga (Opsional tapi disarankan)
-        $produk = $this->produkModel->find($id);
-        if ($produk && $produk['image'] != 'default.jpg') {
-            if (file_exists('uploads/menu/' . $produk['image'])) {
-                unlink('uploads/menu/' . $produk['image']);
-            }
+    // GANTI NAMA FUNGSI: Dari delete() menjadi hapus() agar tidak bentrok (Error 404)
+    public function hapus($id)
+    {
+        if (session()->get('role') !== 'admin') {
+            return redirect()->to('/produk')->with('error', 'Akses ditolak!');
         }
 
-        $this->produkModel->delete($id);
-        return redirect()->to('/produk')->with('success', 'Menu berhasil dihapus!');
+        $produk = $this->produkModel->find($id);
+
+        if ($produk) {
+            $image = $produk['image'];
+            // Jangan hapus jika gambar default atau link luar
+            if ($image != 'default.png' && $image != 'default.jpg' && strpos($image, 'http') === false) {
+                if (file_exists('uploads/menu/' . $image)) {
+                    unlink('uploads/menu/' . $image);
+                }
+            }
+
+            $this->produkModel->delete($id);
+            return redirect()->to('/produk')->with('success', 'Menu berhasil dihapus!');
+        }
+
+        return redirect()->to('/produk')->with('error', 'Menu tidak ditemukan!');
     }
 }

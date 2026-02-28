@@ -19,17 +19,22 @@ class Auth extends BaseController
     {
         $model = new UserModel();
         $username = $this->request->getPost('username');
-        $password = (string)$this->request->getPost('password');
+        $password = trim((string)$this->request->getPost('password'));
 
         $user = $model->where('username', $username)->first();
 
         if ($user) {
-            // Menggunakan password_verify (Pastikan di DB password sudah di-hash/enkripsi)
+            // Mengecek password terhadap hash di DB
             if (password_verify($password, $user['password'])) {
+                
+                // Logika Foto Profil: Jika kosong gunakan default.png
+                $foto = ($user['user_image']) ? $user['user_image'] : 'default.png';
+
                 session()->set([
                     'id'         => $user['id'],
                     'username'   => $user['username'],
-                    'role'       => $user['role'], // Mengambil role dari DB
+                    'role'       => $user['role'], // 'admin' atau 'user'
+                    'user_image' => $foto, 
                     'isLoggedIn' => true,
                 ]);
 
@@ -40,17 +45,35 @@ class Auth extends BaseController
         return redirect()->back()->with('error', 'Username Tidak Ditemukan!');
     }
 
-    // Fungsi tambahan agar redirect lebih rapi berdasarkan role
+    // Mengatur arah halaman setelah login berhasil
     private function _redirectByRole()
     {
         if (session()->get('role') == 'admin') {
+            // Admin diarahkan ke manajemen produk
             return redirect()->to('/produk')->with('success', 'Halo Admin, selamat bekerja!');
         }
+        
+        // User/Kasir diarahkan langsung ke halaman pemesanan
         return redirect()->to('/transaksi')->with('success', 'Halo Kasir, selamat melayani!');
+    }
+
+    // TAMBAHKAN INI: Fungsi untuk proteksi halaman (Filter manual)
+    // Panggil ini di awal fungsi Controller lain untuk cek akses
+    public function checkAuth($roleRequired = null)
+    {
+        if (!session()->get('isLoggedIn')) {
+            return redirect()->to('/login')->send();
+        }
+
+        if ($roleRequired && session()->get('role') !== $roleRequired) {
+            // Jika User mencoba buka halaman Admin, lempar balik ke transaksi
+            return redirect()->to('/transaksi')->with('error', 'Anda tidak punya akses ke sana!')->send();
+        }
     }
 
     public function logout()
     {
+        // Bersihkan semua session termasuk keranjang belanja
         session()->destroy();
         return redirect()->to('/login');
     }

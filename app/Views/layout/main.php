@@ -27,14 +27,14 @@
             text-decoration: none;
         }
         .nav-link i { margin-right: 15px; font-size: 1.1rem; width: 25px; text-align: center; }
+        
+        /* Penambahan Logika Active Link */
         .nav-link:hover, .nav-link.active { 
             background: rgba(230, 138, 0, 0.1) !important; color: var(--accent) !important; 
         }
         
-        /* Main Content Styling */
         .main-content { margin-left: 280px; padding: 40px; min-height: 100vh; }
 
-        /* Badge Role */
         .role-badge {
             font-size: 0.7rem; padding: 3px 10px;
             background: rgba(255, 255, 255, 0.1); border-radius: 50px;
@@ -45,7 +45,30 @@
 <body>
 
 <div class="sidebar">
-    <?= $this->include('layout/sidebar') ?>
+    <div class="mb-5 px-3 text-center">
+        <h3 class="fw-bold text-white mb-0">Queejuy <span class="text-warning">Coffee</span></h3>
+        <span class="role-badge"><?= session()->get('role') ?? 'Kasir' ?> Mode</span>
+    </div>
+
+    <div class="nav-list">
+        <a href="<?= base_url('dashboard') ?>" class="nav-link <?= url_is('dashboard*') ? 'active' : '' ?>">
+            <i class="fas fa-th-large"></i> Dashboard
+        </a>
+
+        <a href="<?= base_url('transaksi') ?>" class="nav-link <?= url_is('transaksi*') ? 'active' : '' ?>">
+            <i class="fas fa-coffee"></i> Menu Gallery
+        </a>
+
+        <a href="<?= base_url('riwayat') ?>" class="nav-link <?= url_is('riwayat*') ? 'active' : '' ?>">
+            <i class="fas fa-history"></i> Riwayat Transaksi
+        </a>
+
+        <div class="mt-5 pt-5">
+            <a href="<?= base_url('logout') ?>" class="nav-link text-danger mt-5">
+                <i class="fas fa-sign-out-alt"></i> Keluar
+            </a>
+        </div>
+    </div>
 </div>
 
 <div class="main-content">

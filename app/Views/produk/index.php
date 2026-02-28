@@ -34,35 +34,39 @@
     </ul>
 
     <div class="tab-content" id="pills-tabContent">
-        
         <div class="tab-pane fade show active" id="all">
             <div class="row g-4 text-start">
-                <?php foreach($produk as $p): ?> 
+                <?php foreach ($produk as $p) : ?>
                     <div class="col-md-3">
-                        <div class="card border-0 rounded-4 overflow-hidden h-100 shadow-lg" style="background: #25282c;">
-                            <div class="position-relative" style="height: 180px;">
-                                <img src="<?= base_url('uploads/menu/'.$p['image']) ?>" class="w-100 h-100" style="object-fit: cover;">
-                                <?php if($p['stok'] <= 0): ?>
-                                    <span class="badge bg-danger position-absolute top-50 start-50 translate-middle rounded-pill">SOLD OUT</span>
+                        <div class="card bg-dark text-white border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                            <div class="position-relative">
+                                <?php 
+                                    $imgSrc = (isset($p['image']) && strpos($p['image'], 'http') !== false) 
+                                              ? $p['image'] 
+                                              : base_url('uploads/menu/' . ($p['image'] ?? 'default.png'));
+                                ?>
+                                <img src="<?= $imgSrc ?>" class="card-img-top" style="height: 200px; object-fit: cover;" onerror="this.src='<?= base_url('uploads/menu/default.png') ?>'">
+                                
+                                <?php if (isset($p['stok']) && $p['stok'] <= 0) : ?>
+                                    <div class="position-absolute top-50 start-50 translate-middle w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.6);">
+                                        <span class="badge bg-danger px-3 py-2">SOLD OUT</span>
+                                    </div>
                                 <?php endif; ?>
                             </div>
-
-                            <div class="card-body p-4 text-white">
-                                <h5 class="fw-bold mb-1 text-white"><?= $p['nama_produk'] ?></h5>
-                                <p class="text-muted small mb-0">Stok: <?= ($p['stok'] <= 0) ? '<span class="text-danger">Habis</span>' : $p['stok'] ?></p>
-                                
-                                <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <span class="text-warning fw-bold fs-5">Rp <?= number_format($p['harga'], 0, ',', '.') ?></span>
+                            
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="fw-bold mb-1"><?= $p['nama_produk'] ?></h5>
+                                <p class="<?= (isset($p['stok']) && $p['stok'] > 0) ? 'text-success' : 'text-danger' ?> small mb-2">
+                                    <?= (isset($p['stok']) && $p['stok'] > 0) ? 'Tersedia: '.$p['stok'] : 'Stok Habis' ?>
+                                </p>
+                                <div class="mt-auto d-flex justify-content-between align-items-center">
+                                    <h6 class="text-warning fw-bold mb-0">Rp <?= number_format($p['harga'], 0, ',', '.') ?></h6>
                                     
                                     <?php if($role == 'admin'): ?>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditMenu<?= $p['id'] ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalDeleteMenu<?= $p['id'] ?>">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditMenu<?= $p['id'] ?>"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalDeleteMenu<?= $p['id'] ?>"><i class="fas fa-trash"></i></button>
+                                    </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -82,14 +86,12 @@
                         $found = true;
                 ?>
                     <div class="col-md-3">
-                        <div class="card border-0 rounded-4 overflow-hidden h-100 shadow-lg" style="background: #25282c;">
-                            <div class="position-relative" style="height: 180px;">
-                                <img src="<?= base_url('uploads/menu/'.$p['image']) ?>" class="w-100 h-100" style="object-fit: cover;">
-                            </div>
-                            <div class="card-body p-4 text-white">
-                                <h5 class="fw-bold mb-1 text-white"><?= $p['nama_produk'] ?></h5>
-                                <span class="text-warning fw-bold">Rp <?= number_format($p['harga'], 0, ',', '.') ?></span>
-                            </div>
+                        <div class="card bg-dark text-white border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                             <img src="<?= base_url('uploads/menu/'.$p['image']) ?>" class="card-img-top" style="height: 200px; object-fit: cover;">
+                             <div class="card-body">
+                                <h5 class="fw-bold mb-1"><?= $p['nama_produk'] ?></h5>
+                                <h6 class="text-warning fw-bold">Rp <?= number_format($p['harga'], 0, ',', '.') ?></h6>
+                             </div>
                         </div>
                     </div>
                 <?php 
@@ -107,16 +109,16 @@
     
     <div class="modal fade" id="modalTambahMenu" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-dark border-secondary text-white">
+            <div class="modal-content bg-dark border-secondary text-white shadow-lg">
                 <form action="<?= base_url('produk/save') ?>" method="post" enctype="multipart/form-data">
                     <div class="modal-header border-secondary">
-                        <h5 class="modal-title">Tambah Menu Baru</h5>
+                        <h5 class="modal-title fw-bold text-warning">Tambah Menu Baru</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4 text-start">
                         <div class="mb-3">
                             <label class="small fw-bold mb-2">NAMA PRODUK</label>
-                            <input type="text" name="nama_produk" class="form-control bg-black border-secondary text-white" required>
+                            <input type="text" name="nama_produk" class="form-control bg-black border-secondary text-white" required placeholder="Contoh: Matcha Latte">
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -128,7 +130,7 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="small fw-bold mb-2">HARGA</label>
+                                <label class="small fw-bold mb-2">HARGA (RP)</label>
                                 <input type="number" name="harga" class="form-control bg-black border-secondary text-white" required>
                             </div>
                         </div>
@@ -150,7 +152,6 @@
     </div>
 
     <?php foreach($produk as $p): ?>
-        
         <div class="modal fade" id="modalEditMenu<?= $p['id'] ?>" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content bg-dark border-secondary text-white shadow-lg">
@@ -198,7 +199,6 @@
                 </div>
             </div>
         </div>
-
     <?php endforeach; ?>
 <?php endif; ?>
 

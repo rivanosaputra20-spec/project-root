@@ -7,58 +7,104 @@ use App\Models\TransaksiModel;
 
 class Transaksi extends BaseController
 {
-    public function index()
+    // Tampilan Gallery Menu
+    public function index() {
+        $model = new ProdukModel();
+        $data = [
+            'title'   => 'Order Menu',
+            'produk'  => $model->findAll(),
+            'cart'    => session()->get('cart') ?? []
+        ];
+        return view('transaksi/index', $data); 
+    }
+
+    // PENAMBAHAN: Fungsi Riwayat Transaksi agar rute 'riwayat' bekerja
+    public function riwayat()
     {
         $model = new TransaksiModel();
         $data = [
-            'title'     => 'Riwayat Transaksi',
+            'title'     => 'Riwayat Transaksi - Queejuy Coffee',
+            // Mengambil semua transaksi, urutkan dari yang terbaru
             'transaksi' => $model->orderBy('id', 'DESC')->findAll()
         ];
-        return view('Transaksi/index', $data); 
+        
+        return view('transaksi/riwayat', $data);
     }
 
-    public function create()
+    // Menambah item ke keranjang via Session
+    public function addToCart($id)
     {
-        $produkModel = new ProdukModel();
-        $data = [
-            'title'  => 'Kasir - Kopi Kita',
-            'produk' => $produkModel->findAll()
-        ];
-        return view('Transaksi/create', $data);
+        $model = new ProdukModel();
+        $produk = $model->find($id);
+
+        if ($produk) {
+            $cart = session()->get('cart') ?? [];
+
+            if (isset($cart[$id])) {
+                $cart[$id]['qty']++;
+            } else {
+                $cart[$id] = [
+                    'nama'  => $produk['nama_produk'],
+                    'harga' => $produk['harga'],
+                    'qty'   => 1,
+                    'foto'  => $produk['image'] 
+                ];
+            }
+
+            session()->set('cart', $cart);
+            return redirect()->to('/transaksi')->with('success', 'Menu berhasil ditambahkan!');
+        }
+        
+        return redirect()->to('/transaksi')->with('error', 'Produk tidak ditemukan!');
     }
 
-    // --- TAMBAHKAN FUNGSI SAVE UNTUK MENYIMPAN TRANSAKSI ---
+    // Hapus satu item atau bersihkan keranjang
+    public function clearCart() {
+        session()->remove('cart');
+        return redirect()->to('/transaksi');
+    }
+
+    // Simpan Transaksi ke Database
     public function save()
     {
         $model = new TransaksiModel();
         
+        // Ambil data dari form post
+        $total = $this->request->getPost('total_harga');
+        $nama_pelanggan = $this->request->getPost('nama_pelanggan') ?: 'Pelanggan Umum';
+        $metode = $this->request->getPost('metode_bayar') ?? 'Cash';
+
+        if (!$total || $total == 0) {
+            return redirect()->back()->with('error', 'Keranjang masih kosong!');
+        }
+
         $data = [
-            'nama_pelanggan' => $this->request->getPost('nama_pelanggan') ?? 'Pelanggan Umum',
-            'total'          => $this->request->getPost('total'),
-            'metode_bayar'   => $this->request->getPost('metode_bayar'),
-            'status'         => 'Selesai'
+            'nama_pelanggan' => $nama_pelanggan,
+            'total_harga'    => $total, 
+            'metode_bayar'   => $metode,
+            'status'         => 'Selesai',
+            'created_at'     => date('Y-m-d H:i:s')
         ];
 
         $model->insert($data);
-        $insertID = $model->insertID(); // Ambil ID transaksi yang baru saja disimpan
+        $insertID = $model->getInsertID(); // Gunakan getInsertID() untuk CI4
 
-        // Setelah simpan, langsung lempar ke halaman print
+        session()->remove('cart');
         return redirect()->to('/transaksi/print/' . $insertID);
     }
 
-    // --- TAMBAHKAN FUNGSI PRINT ---
-    public function print($id)
-    {
+    public function print($id) {
         $model = new TransaksiModel();
-        $data = [
-            'title'     => 'Cetak Struk #' . $id,
-            'transaksi' => $model->find($id)
-        ];
+        $transaksi = $model->find($id);
 
-        if (!$data['transaksi']) {
-            return redirect()->to('/transaksi')->with('error', 'Data tidak ditemukan');
+        if (!$transaksi) {
+            return redirect()->to('/transaksi')->with('error', 'Data transaksi tidak ditemukan.');
         }
 
-        return view('Transaksi/print', $data);
+        $data = [
+            'title'     => 'Cetak Struk #' . $id,
+            'transaksi' => $transaksi
+        ];
+        return view('transaksi/print', $data);
     }
 }
