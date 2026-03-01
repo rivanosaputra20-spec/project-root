@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <div class="container-fluid py-4" style="background: #1a1d20; min-height: 100vh;">
     
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 text-start">
         <div>
             <h2 class="fw-bold text-white mb-0">Menu Gallery</h2>
             <p class="text-muted small">
@@ -20,7 +20,7 @@
 
     <ul class="nav nav-pills mb-4 gap-2" id="pills-tab" role="tablist">
         <li class="nav-item">
-            <button class="nav-link active rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#all">Semua</button>
+            <button class="nav-link active rounded-pill px-4 border border-warning" data-bs-toggle="pill" data-bs-target="#all">Semua</button>
         </li>
         <?php foreach($kategori as $kat): ?>
             <li class="nav-item">
@@ -34,44 +34,40 @@
     </ul>
 
     <div class="tab-content" id="pills-tabContent">
+        
         <div class="tab-pane fade show active" id="all">
             <div class="row g-4 text-start">
-                <?php foreach ($produk as $p) : ?>
-                    <div class="col-md-3">
-                        <div class="card bg-dark text-white border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                            <div class="position-relative">
-                                <?php 
-                                    $imgSrc = (isset($p['image']) && strpos($p['image'], 'http') !== false) 
-                                              ? $p['image'] 
-                                              : base_url('uploads/menu/' . ($p['image'] ?? 'default.png'));
-                                ?>
-                                <img src="<?= $imgSrc ?>" class="card-img-top" style="height: 200px; object-fit: cover;" onerror="this.src='<?= base_url('uploads/menu/default.png') ?>'">
-                                
-                                <?php if (isset($p['stok']) && $p['stok'] <= 0) : ?>
-                                    <div class="position-absolute top-50 start-50 translate-middle w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.6);">
-                                        <span class="badge bg-danger px-3 py-2">SOLD OUT</span>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="fw-bold mb-1"><?= $p['nama_produk'] ?></h5>
-                                <p class="<?= (isset($p['stok']) && $p['stok'] > 0) ? 'text-success' : 'text-danger' ?> small mb-2">
-                                    <?= (isset($p['stok']) && $p['stok'] > 0) ? 'Tersedia: '.$p['stok'] : 'Stok Habis' ?>
-                                </p>
-                                <div class="mt-auto d-flex justify-content-between align-items-center">
-                                    <h6 class="text-warning fw-bold mb-0">Rp <?= number_format($p['harga'], 0, ',', '.') ?></h6>
-                                    
-                                    <?php if($role == 'admin'): ?>
-                                    <div>
-                                        <button class="btn btn-sm btn-outline-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditMenu<?= $p['id'] ?>"><i class="fas fa-edit"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalDeleteMenu<?= $p['id'] ?>"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                    <?php endif; ?>
+                <?php foreach($produk as $p) : ?>
+                <div class="col-md-3">
+                    <div class="card bg-dark text-white border-0 shadow-sm mb-4 h-100 rounded-4 overflow-hidden">
+                        <div class="position-relative">
+                            <img src="<?= base_url('uploads/menu/' . $p['image']) ?>" class="card-img-top <?= ($p['stok'] <= 0) ? 'opacity-50' : '' ?>" style="height: 180px; object-fit: cover;">
+                            <?php if($p['stok'] <= 0) : ?>
+                                <div class="position-absolute top-50 start-50 translate-middle">
+                                    <span class="badge bg-danger px-3 py-2 shadow">SOLD OUT</span>
                                 </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="fw-bold mb-1"><?= $p['nama_produk'] ?></h6>
+                            <small class="<?= ($p['stok'] <= 0) ? 'text-danger' : 'text-muted' ?>">
+                                <?= ($p['stok'] <= 0) ? 'Stok Habis' : 'Stok: ' . $p['stok'] ?>
+                            </small>
+                            <p class="text-warning fw-bold mt-2 mb-3">Rp <?= number_format($p['harga'], 0, ',', '.') ?></p>
+                            
+                            <?php if($role == 'admin'): ?>
+                            <div class="d-flex justify-content-between mt-auto">
+                                <button type="button" class="btn btn-outline-warning btn-sm w-100 me-2" data-bs-toggle="modal" data-bs-target="#modalEditMenu<?= $p['id'] ?>">
+                                    <i class="fas fa-edit me-1"></i> Update
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalDeleteMenu<?= $p['id'] ?>">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
+                            <?php endif; ?>
                         </div>
                     </div>
+                </div>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -87,10 +83,21 @@
                 ?>
                     <div class="col-md-3">
                         <div class="card bg-dark text-white border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                             <img src="<?= base_url('uploads/menu/'.$p['image']) ?>" class="card-img-top" style="height: 200px; object-fit: cover;">
-                             <div class="card-body">
-                                <h5 class="fw-bold mb-1"><?= $p['nama_produk'] ?></h5>
-                                <h6 class="text-warning fw-bold">Rp <?= number_format($p['harga'], 0, ',', '.') ?></h6>
+                             <img src="<?= base_url('uploads/menu/'.$p['image']) ?>" class="card-img-top" style="height: 180px; object-fit: cover;">
+                             <div class="card-body d-flex flex-column">
+                                <h6 class="fw-bold mb-1"><?= $p['nama_produk'] ?></h6>
+                                <p class="text-warning fw-bold mb-3">Rp <?= number_format($p['harga'], 0, ',', '.') ?></p>
+                                
+                                <?php if($role == 'admin'): ?>
+                                <div class="d-flex justify-content-between mt-auto">
+                                    <button class="btn btn-outline-warning btn-sm w-100 me-2" data-bs-toggle="modal" data-bs-target="#modalEditMenu<?= $p['id'] ?>">
+                                        <i class="fas fa-edit"></i> Update
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalDeleteMenu<?= $p['id'] ?>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                <?php endif; ?>
                              </div>
                         </div>
                     </div>
@@ -140,7 +147,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="small fw-bold mb-2">FOTO PRODUK</label>
-                            <input type="file" name="image" class="form-control bg-black border-secondary text-white">
+                            <input type="file" name="image" class="form-control bg-black border-secondary text-white" required>
                         </div>
                     </div>
                     <div class="modal-footer border-secondary">
@@ -154,13 +161,13 @@
     <?php foreach($produk as $p): ?>
         <div class="modal fade" id="modalEditMenu<?= $p['id'] ?>" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content bg-dark border-secondary text-white shadow-lg">
+                <div class="modal-content bg-dark border-secondary text-white shadow-lg text-start">
                     <form action="<?= base_url('produk/update/'.$p['id']) ?>" method="post">
                         <div class="modal-header border-secondary">
                             <h5 class="modal-title fw-bold">Update Harga & Stok</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="modal-body p-4 text-start">
+                        <div class="modal-body p-4">
                             <p class="small text-muted mb-3">Produk: <strong class="text-white"><?= $p['nama_produk'] ?></strong></p>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
@@ -205,7 +212,6 @@
 <style>
     .nav-pills .nav-link.active { background-color: #ffc107 !important; color: #000 !important; font-weight: bold; }
     .card { transition: transform 0.3s ease; }
-    .card:hover { transform: translateY(-10px); }
-    .text-start { text-align: left !important; }
+    .card:hover { transform: translateY(-8px); }
 </style>
 <?= $this->endSection() ?>

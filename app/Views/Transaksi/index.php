@@ -118,7 +118,8 @@
                             </div>
                         </div>
 
-                        <input type="hidden" name="total" value="<?= $total ?>">
+                        <input type="hidden" name="total_akhir" value="<?= $total ?>">
+                        
                         <div class="mb-3">
                             <label class="small fw-bold text-muted mb-1">Nama Pelanggan</label>
                             <input type="text" name="nama_pelanggan" class="form-control border-0 bg-light rounded-3" placeholder="Contoh: Budi Santoso" required>
@@ -201,5 +202,4 @@
         });
     });
 </script>
-
 <?= $this->endSection() ?>

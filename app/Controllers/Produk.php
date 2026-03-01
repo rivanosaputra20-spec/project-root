@@ -13,10 +13,7 @@ class Produk extends BaseController
     }
 
     public function index() {
-        $session = session();
-        
-        // Proteksi: Cek apakah sudah login
-        if (!$session->get('isLoggedIn')) {
+        if (!session()->get('isLoggedIn')) {
             return redirect()->to('/login');
         }
 
@@ -24,25 +21,25 @@ class Produk extends BaseController
             'title'    => 'Menu Gallery',
             'produk'   => $this->produkModel->findAll(),
             'kategori' => ['Coffee', 'Non-Coffee', 'Pastry', 'Snack'],
-            'role'     => $session->get('role'), 
-            'username' => $session->get('username')
+            'role'     => session()->get('role'), 
+            'username' => session()->get('username')
         ];
         
         return view('produk/index', $data);
     }
 
     public function save() {
-        // Proteksi Role: Hanya Admin
         if (session()->get('role') !== 'admin') {
             return redirect()->to('/produk')->with('error', 'Akses ditolak!');
         }
 
         $file = $this->request->getFile('image');
-        // Gunakan default.png agar sinkron dengan database kamu
-        $namaGambar = ($file && $file->isValid() && !$file->hasMoved()) ? $file->getRandomName() : 'default.png';
+        $namaGambar = 'default.png';
         
         if($file && $file->isValid() && !$file->hasMoved()) {
-            $file->move('uploads/menu', $namaGambar);
+            $namaGambar = $file->getRandomName();
+            // Gunakan FCPATH agar masuk ke folder public/uploads/menu
+            $file->move(FCPATH . 'uploads/menu', $namaGambar);
         }
 
         $this->produkModel->save([
@@ -71,7 +68,6 @@ class Produk extends BaseController
         return redirect()->to('/produk')->with('success', 'Data menu diperbarui!');
     }
 
-    // GANTI NAMA FUNGSI: Dari delete() menjadi hapus() agar tidak bentrok (Error 404)
     public function hapus($id)
     {
         if (session()->get('role') !== 'admin') {
@@ -82,10 +78,11 @@ class Produk extends BaseController
 
         if ($produk) {
             $image = $produk['image'];
-            // Jangan hapus jika gambar default atau link luar
-            if ($image != 'default.png' && $image != 'default.jpg' && strpos($image, 'http') === false) {
-                if (file_exists('uploads/menu/' . $image)) {
-                    unlink('uploads/menu/' . $image);
+            // Validasi hapus file fisik
+            if ($image && $image != 'default.png' && strpos($image, 'http') === false) {
+                $path = FCPATH . 'uploads/menu/' . $image;
+                if (file_exists($path)) {
+                    unlink($path);
                 }
             }
 
