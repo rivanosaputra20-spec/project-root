@@ -5,7 +5,7 @@
     <div>
         <span class="text-warning fw-bold text-uppercase small">Est. 2023 • Artisan Roastery</span>
         <h1 class="display-4 fw-bold mt-2">Crafting Your<br>Daily Ritual</h1>
-        <p class="text-light opacity-75 mt-3" style="max-width: 450px;">Nikmati harmoni sempurna dari biji kopi pilihan yang dipanggang dengan penuh cinta.</p>
+        <p class="text-light opacity-75 mt-3" style="max-width: 450px;">Nikmati 1 harmoni sempurna dari biji kopi pilihan yang dipanggang dengan penuh cinta.</p>
         <div class="mt-4">
             <button class="btn btn-warning px-4 py-2 fw-bold rounded-pill me-2">Pesan Sekarang</button>
             <button class="btn btn-outline-light px-4 py-2 rounded-pill">Tentang Kami</button>
