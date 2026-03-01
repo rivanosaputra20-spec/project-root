@@ -65,7 +65,7 @@
                 </div>
             <?php else : ?>
                 <h1 class="display-4 fw-bold mt-2 text-white">Crafting Your<br>Daily Ritual</h1>
-                <p class="text-white-50 mt-3 mb-4 w-50">Siap melayani pelanggan? Mulai pesanan baru atau lihat daftar top menu hari ini.</p>
+                <p class="text-white-50 mt-3 mb-4 w-50">Siap melayani? Mulai pesanan baru atau lihat daftar top menu hari ini.</p>
                 <div class="d-flex gap-2">
                     <a href="<?= base_url('transaksi') ?>" class="btn btn-warning px-5 py-3 fw-bold rounded-pill shadow">Pesan Sekarang</a>
                     <button class="btn btn-outline-light px-5 py-3 rounded-pill border-2">Cek Stok Menu</button>
