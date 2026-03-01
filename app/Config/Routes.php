@@ -23,7 +23,7 @@ $routes->group('api', function($routes) {
 });
 
 // --- GRUP YANG HARUS LOGIN (Tampilan Web) ---
-$routes->group('', ['filter' => 'auth'], function($routes) {
+    $routes->group('', ['filter' => 'auth'], function($routes) {
     // Dashboard Utama
     $routes->get('/', 'Home::index');
     $routes->get('dashboard', 'Dashboard::index'); 

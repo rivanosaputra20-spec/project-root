@@ -26,6 +26,9 @@ class Dashboard extends BaseController
         $total_pelanggan = $transaksiModel->distinct()->countAllResults('nama_pelanggan');
 
         // 3. Siapkan Array Data untuk dikirim ke View
+        $produkModel = new ProdukModel();
+        $transaksiModel = new TransaksiModel();
+
         $data = [
             'title'              => 'Dashboard | Queejuy Coffee',
             'role'               => session()->get('role'),
