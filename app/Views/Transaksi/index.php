@@ -2,14 +2,19 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid p-4 bg-dark min-vh-100 position-relative">
+    <?php 
+        // Ambil role langsung dari session untuk keamanan tampilan
+        $userRole = strtolower(session()->get('role') ?? ''); 
+    ?>
+
     <div class="row mb-4 align-items-center">
-        <div class="col-md-6">
-            <h2 class="text-white fw-bold m-0"><i class="fas fa-mug-hot text-warning me-2"></i>Queejuy Menu</h2>
-            <p class="text-muted small">Halo, <span class="text-warning fw-bold"><?= session()->get('username') ?></span>! Siap melayani pelanggan hari ini?</p>
+        <div class="col-md-6 text-start">
+            <h2 class="text-white fw-bold m-0"><i class="fas fa-mug-hot text-warning me-2"></i>Queejuy Coffee</h2>
+            <p class="text-muted small">Halo, <span class="text-warning fw-bold"><?= session()->get('username') ?></span>! (<?= ucfirst($userRole) ?>)</p>
         </div>
         <div class="col-md-6 text-end">
             <div class="input-group w-50 ms-auto shadow-sm">
-                <input type="text" id="menuSearch" class="form-control bg-secondary border-0 text-white rounded-start-pill ps-4" placeholder="Cari kopi kesukaan...">
+                <input type="text" id="menuSearch" class="form-control bg-secondary border-0 text-white rounded-start-pill ps-4" placeholder="Cari menu...">
                 <button class="btn btn-warning rounded-end-pill px-4"><i class="fas fa-search"></i></button>
             </div>
         </div>
@@ -24,53 +29,51 @@
         </div>
     </div>
 
-    <?php if (session()->getFlashdata('success')) : ?>
-        <div class="alert alert-success border-0 bg-success text-white shadow-sm rounded-4 mb-4 fade show" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-check-circle me-3 fa-lg"></i>
-                <div>
-                    <strong>Berhasil!</strong> <?= session()->getFlashdata('success') ?>
-                </div>
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <div class="row g-4 mb-5" id="menuContainer">
         <?php foreach ($produk as $p) : ?>
         <div class="col-md-3 menu-item" data-category="<?= $p['kategori'] ?>">
             <div class="card h-100 border-0 bg-secondary text-white shadow coffee-card rounded-4 overflow-hidden">
                 <div class="position-relative">
-                    <img src="<?= base_url('uploads/menu/'.$p['image']) ?>" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    <img src="<?= base_url('uploads/menu/'.$p['image']) ?>" class="card-img-top <?= ($p['stok'] <= 0) ? 'opacity-25 grayscale' : '' ?>" style="height: 200px; object-fit: cover;">
                     <div class="position-absolute bottom-0 start-0 w-100 p-2" style="background: linear-gradient(transparent, rgba(0,0,0,0.8));">
                          <span class="badge bg-warning text-dark rounded-pill shadow-sm">Rp <?= number_format($p['harga'], 0, ',', '.') ?></span>
                     </div>
+                    <?php if($p['stok'] <= 0) : ?>
+                        <div class="position-absolute top-50 start-50 translate-middle">
+                            <span class="badge bg-danger px-3 py-2 shadow">HABIS</span>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                
-                <div class="card-body p-3 d-flex flex-column">
+                <div class="card-body p-3 d-flex flex-column text-start">
                     <h6 class="fw-bold mb-1"><?= $p['nama_produk'] ?></h6>
+                    <p class="text-light opacity-50 small flex-grow-1 mb-1">Stok: <?= $p['stok'] ?></p>
                     <p class="text-light opacity-50 small flex-grow-1 mb-3"><?= $p['deskripsi'] ?? 'Seduhan penuh cinta.' ?></p>
                     
-                    <form action="<?= base_url('transaksi/addToCart/'.$p['id']) ?>" method="get">
-                        <button type="submit" class="btn btn-warning w-100 rounded-pill fw-bold shadow-sm hover-scale">
-                            <i class="fas fa-plus-circle me-1"></i> Add to Order
-                        </button>
-                    </form>
+                    <div class="mt-auto">
+                        <?php if($userRole === 'admin'): ?>
+                            <div class="d-flex gap-2">
+                                <a href="<?= base_url('produk/edit/'.$p['id']) ?>" class="btn btn-outline-warning w-100 rounded-pill fw-bold">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </a>
+                            </div>
+                        <?php else: ?>
+                            <button type="button" onclick="addToCart(<?= $p['id'] ?>)" class="btn btn-warning w-100 rounded-pill fw-bold shadow-sm" <?= ($p['stok'] <= 0) ? 'disabled' : '' ?>>
+                                <i class="fas fa-plus-circle me-1"></i> Add to Order
+                            </button>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
         <?php endforeach; ?>
     </div>
 
-    <?php $cartCount = count(session()->get('cart') ?? []); ?>
-    <button type="button" class="btn btn-warning fab-cart shadow-lg rounded-circle p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+    <?php if($userRole !== 'admin'): ?>
+    <button type="button" id="btnCartFloating" class="btn btn-warning fab-cart shadow-lg rounded-circle p-0" onclick="openCartModal()">
         <i class="fas fa-shopping-basket fa-lg"></i>
-        <?php if($cartCount > 0): ?>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-danger border border-light" style="padding: 6px 10px;">
-                <?= $cartCount ?>
-            </span>
-        <?php endif; ?>
+        <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-danger border border-light d-none" style="padding: 6px 10px;">0</span>
     </button>
+    <?php endif; ?>
 </div>
 
 <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
@@ -81,60 +84,52 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
-            <form action="<?= base_url('transaksi/save') ?>" method="post">
-                <div class="modal-body p-4 bg-white">
-                    <?php $total = 0; $cart = session()->get('cart') ?? []; ?>
-                    
-                    <?php if (empty($cart)) : ?>
-                        <div class="text-center py-5">
-                            <div class="mb-3 opacity-25"><i class="fas fa-shopping-cart fa-5x"></i></div>
-                            <h5 class="text-muted">Ops! Keranjang Kosong</h5>
-                            <p class="small text-muted">Ayo tambahkan menu lezat ke sini.</p>
-                        </div>
-                    <?php else : ?>
-                        <div class="cart-items mb-4 pe-2" style="max-height: 350px; overflow-y: auto;">
-                            <?php foreach ($cart as $id => $item) : 
-                                $subtotal = $item['harga'] * $item['qty'];
-                                $total += $subtotal;
-                            ?>
-                                <div class="d-flex align-items-center mb-3 p-3 bg-light rounded-4 border-start border-warning border-4">
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0 fw-bold text-dark"><?= $item['nama'] ?></h6>
-                                        <span class="badge bg-white text-dark border small"><?= $item['qty'] ?> x Rp <?= number_format($item['harga'], 0, ',', '.') ?></span>
-                                    </div>
-                                    <span class="fw-bold text-dark fs-5">Rp <?= number_format($subtotal, 0, ',', '.') ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
+            <form id="formTransaksi" action="<?= base_url('transaksi/save') ?>" method="post">
+                <div class="modal-body p-4 bg-white text-start">
+                    <div id="cartItemsContainer" class="mb-4" style="max-height: 250px; overflow-y: auto;"></div>
 
-                        <div class="bg-light p-3 rounded-4 mb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-muted">Subtotal</span>
-                                <span class="fw-bold">Rp <?= number_format($total, 0, ',', '.') ?></span>
-                            </div>
+                    <div id="cartContentArea">
+                        <div class="bg-light p-3 rounded-4 mb-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="fw-bold text-dark m-0">Total Akhir</h5>
-                                <h5 class="fw-bold text-success m-0">Rp <?= number_format($total, 0, ',', '.') ?></h5>
+                                <span class="text-muted fw-bold">Total Akhir</span>
+                                <h4 class="fw-bold text-success m-0" id="displayTotal">Rp 0</h4>
+                            </div>
+                        </div>
+                        <input type="hidden" name="total_akhir" id="inputTotal">
+
+                        <div class="mb-3">
+                            <label class="small fw-bold text-muted mb-2">NAMA PELANGGAN</label>
+                            <input type="text" name="nama_pelanggan" class="form-control border-0 bg-light rounded-3 shadow-sm" placeholder="Contoh: Budi Santoso" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="small fw-bold text-muted mb-2 d-block text-center">METODE PEMBAYARAN</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="metode_pembayaran" id="method_cash" value="cash" checked>
+                                    <label class="btn btn-outline-dark w-100 py-3 fw-bold rounded-3" for="method_cash">
+                                        <i class="fas fa-money-bill-wave d-block mb-1"></i> CASH
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="metode_pembayaran" id="method_qris" value="qris">
+                                    <label class="btn btn-outline-primary w-100 py-3 fw-bold rounded-3" for="method_qris">
+                                        <i class="fas fa-qrcode d-block mb-1"></i> QRIS
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
-                        <input type="hidden" name="total_akhir" value="<?= $total ?>">
-                        
-                        <div class="mb-3">
-                            <label class="small fw-bold text-muted mb-1">Nama Pelanggan</label>
-                            <input type="text" name="nama_pelanggan" class="form-control border-0 bg-light rounded-3" placeholder="Contoh: Budi Santoso" required>
+                        <div id="qrisSection" class="text-center mb-3 p-3 border rounded-4 d-none bg-light">
+                            <p class="small text-muted mb-2">Scan QRIS Queejuy Coffee</p>
+                            <img src="<?= base_url('images/qris_code.png') ?>" class="img-fluid rounded-3 mb-2" style="max-width: 150px;">
+                            <p class="small fw-bold text-primary m-0">QUEEJUY COFFEE HUB</p>
                         </div>
-                        
+
                         <button type="submit" class="btn btn-warning w-100 py-3 rounded-pill fw-bold shadow">
                             CETAK STRUK & SELESAI <i class="fas fa-print ms-2"></i>
                         </button>
-                        
-                        <div class="text-center mt-3">
-                            <a href="<?= base_url('transaksi/clearCart') ?>" class="text-danger text-decoration-none small fw-bold">
-                                <i class="fas fa-trash-alt me-1"></i> Kosongkan Keranjang
-                            </a>
-                        </div>
-                    <?php endif; ?>
+                    </div>
                 </div>
             </form>
         </div>
@@ -142,64 +137,106 @@
 </div>
 
 <style>
-    .coffee-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .coffee-card:hover { transform: translateY(-10px); }
-    .hover-scale:hover { transform: scale(1.05); }
-    
-    .fab-cart {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 70px;
-        height: 70px;
-        z-index: 1000;
-        transition: all 0.3s ease;
-        border: 4px solid #1a1d20;
-    }
-    .fab-cart:hover { transform: scale(1.1) rotate(5deg); }
-    
-    .cart-items::-webkit-scrollbar { width: 5px; }
-    .cart-items::-webkit-scrollbar-track { background: #f1f1f1; }
-    .cart-items::-webkit-scrollbar-thumb { background: #f39c12; border-radius: 10px; }
-
-    #menuSearch:focus {
-        background-color: #343a40 !important;
-        box-shadow: 0 0 0 0.25rem rgba(243, 156, 18, 0.25);
-    }
+    .coffee-card { transition: all 0.3s ease; }
+    .coffee-card:hover { transform: translateY(-8px); }
+    .fab-cart { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; z-index: 1050; border: 4px solid #1a1d20; transition: transform 0.2s ease; }
+    .btn-check:checked + .btn-outline-dark { background-color: #212529; color: white; }
+    .btn-check:checked + .btn-outline-primary { background-color: #0d6efd; color: white; }
+    .grayscale { filter: grayscale(1); }
 </style>
 
 <script>
-    const searchInput = document.getElementById('menuSearch');
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const menuItems = document.querySelectorAll('.menu-item');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search & Filter Logic (Tetap)
+        const searchInput = document.getElementById('menuSearch');
+        const menuItems = document.querySelectorAll('.menu-item');
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            menuItems.forEach(item => {
+                const name = item.querySelector('h6').textContent.toLowerCase();
+                item.style.display = name.includes(query) ? "" : "none";
+            });
+        });
 
-    function filterMenu() {
-        const searchText = searchInput.value.toLowerCase();
-        const activeCategory = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                filterBtns.forEach(b => b.classList.remove('active', 'btn-warning'));
+                this.classList.add('active', 'btn-warning');
+                const filter = this.dataset.filter;
+                menuItems.forEach(item => {
+                    item.style.display = (filter === 'all' || item.dataset.category === filter) ? "" : "none";
+                });
+            });
+        });
 
-        menuItems.forEach(item => {
-            const title = item.querySelector('h6').innerText.toLowerCase();
-            const category = item.getAttribute('data-category');
+        // Toggle QRIS
+        const methodRadios = document.querySelectorAll('input[name="metode_pembayaran"]');
+        methodRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const qris = document.getElementById('qrisSection');
+                if(qris) qris.classList.toggle('d-none', e.target.value !== 'qris');
+            });
+        });
 
-            const matchSearch = title.includes(searchText);
-            const matchCategory = (activeCategory === 'all' || category === activeCategory);
+        updateModalData();
+    });
 
-            item.style.display = (matchSearch && matchCategory) ? "" : "none";
+    function addToCart(id) {
+        if ("<?= $userRole ?>" === "admin") return;
+
+        fetch(`<?= base_url('transaksi/addToCart') ?>/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                updateModalData();
+                const btnCart = document.getElementById('btnCartFloating');
+                if(btnCart) {
+                    btnCart.classList.add('cart-bump');
+                    setTimeout(() => btnCart.classList.remove('cart-bump'), 400);
+                }
+            }
         });
     }
 
-    searchInput.addEventListener('keyup', filterMenu);
+    function openCartModal() {
+        updateModalData();
+        new bootstrap.Modal(document.getElementById('cartModal')).show();
+    }
 
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filterBtns.forEach(b => {
-                b.classList.remove('active', 'btn-warning');
-                b.classList.add('btn-outline-secondary', 'text-white');
-            });
-            this.classList.add('active', 'btn-warning');
-            this.classList.remove('btn-outline-secondary', 'text-white');
-            filterMenu();
+    function updateModalData() {
+        if ("<?= $userRole ?>" === "admin") return;
+
+        fetch('<?= base_url('transaksi/getCart') ?>')
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('cartItemsContainer');
+            const badge = document.getElementById('cartBadge');
+            if(!container) return;
+
+            container.innerHTML = '';
+            if (!data.cart || data.cart.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted p-4">Keranjang Kosong</div>';
+                if(badge) badge.classList.add('d-none');
+            } else {
+                if(badge) {
+                    badge.classList.remove('d-none');
+                    badge.innerText = data.cart.length;
+                }
+                data.cart.forEach(item => {
+                    container.innerHTML += `
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded-3 text-dark border-start border-warning border-4 shadow-sm">
+                            <div>
+                                <span class="fw-bold d-block">${item.nama}</span>
+                                <small>${item.qty} x Rp ${Number(item.harga).toLocaleString('id-ID')}</small>
+                            </div>
+                            <span class="fw-bold">Rp ${(item.qty * item.harga).toLocaleString('id-ID')}</span>
+                        </div>`;
+                });
+                document.getElementById('displayTotal').innerText = 'Rp ' + data.total_formatted;
+                document.getElementById('inputTotal').value = data.total;
+            }
         });
-    });
+    }
 </script>
 <?= $this->endSection() ?>
