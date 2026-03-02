@@ -3,7 +3,6 @@
 <?= $this->section('content') ?>
 <div class="container-fluid p-4 bg-dark min-vh-100 position-relative">
     <?php 
-        // Ambil role langsung dari session untuk keamanan tampilan
         $userRole = strtolower(session()->get('role') ?? ''); 
     ?>
 
@@ -46,16 +45,14 @@
                 </div>
                 <div class="card-body p-3 d-flex flex-column text-start">
                     <h6 class="fw-bold mb-1"><?= $p['nama_produk'] ?></h6>
-                    <p class="text-light opacity-50 small flex-grow-1 mb-1">Stok: <?= $p['stok'] ?></p>
-                    <p class="text-light opacity-50 small flex-grow-1 mb-3"><?= $p['deskripsi'] ?? 'Seduhan penuh cinta.' ?></p>
+                    <p class="text-light opacity-50 small mb-1">Stok: <?= $p['stok'] ?></p>
+                    <p class="text-light opacity-50 small flex-grow-1 mb-3"><?= $p['deskripsi'] ?: 'Seduhan penuh cinta.' ?></p>
                     
                     <div class="mt-auto">
                         <?php if($userRole === 'admin'): ?>
-                            <div class="d-flex gap-2">
-                                <a href="<?= base_url('produk/edit/'.$p['id']) ?>" class="btn btn-outline-warning w-100 rounded-pill fw-bold">
-                                    <i class="fas fa-edit me-1"></i> Edit
-                                </a>
-                            </div>
+                            <a href="<?= base_url('produk/edit/'.$p['id']) ?>" class="btn btn-outline-warning w-100 rounded-pill fw-bold">
+                                <i class="fas fa-edit me-1"></i> Edit
+                            </a>
                         <?php else: ?>
                             <button type="button" onclick="addToCart(<?= $p['id'] ?>)" class="btn btn-warning w-100 rounded-pill fw-bold shadow-sm" <?= ($p['stok'] <= 0) ? 'disabled' : '' ?>>
                                 <i class="fas fa-plus-circle me-1"></i> Add to Order
@@ -99,20 +96,20 @@
 
                         <div class="mb-3">
                             <label class="small fw-bold text-muted mb-2">NAMA PELANGGAN</label>
-                            <input type="text" name="nama_pelanggan" class="form-control border-0 bg-light rounded-3 shadow-sm" placeholder="Contoh: Budi Santoso" required>
+                            <input type="text" name="nama_pelanggan" class="form-control border-0 bg-light rounded-3 shadow-sm" placeholder="Nama pelanggan..." required>
                         </div>
 
                         <div class="mb-3">
                             <label class="small fw-bold text-muted mb-2 d-block text-center">METODE PEMBAYARAN</label>
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <input type="radio" class="btn-check" name="metode_pembayaran" id="method_cash" value="cash" checked>
+                                    <input type="radio" class="btn-check" name="metode_pembayaran" id="method_cash" value="cash" checked onclick="toggleQRIS(false)">
                                     <label class="btn btn-outline-dark w-100 py-3 fw-bold rounded-3" for="method_cash">
                                         <i class="fas fa-money-bill-wave d-block mb-1"></i> CASH
                                     </label>
                                 </div>
                                 <div class="col-6">
-                                    <input type="radio" class="btn-check" name="metode_pembayaran" id="method_qris" value="qris">
+                                    <input type="radio" class="btn-check" name="metode_pembayaran" id="method_qris" value="qris" onclick="toggleQRIS(true)">
                                     <label class="btn btn-outline-primary w-100 py-3 fw-bold rounded-3" for="method_qris">
                                         <i class="fas fa-qrcode d-block mb-1"></i> QRIS
                                     </label>
@@ -120,10 +117,21 @@
                             </div>
                         </div>
 
-                        <div id="qrisSection" class="text-center mb-3 p-3 border rounded-4 d-none bg-light">
-                            <p class="small text-muted mb-2">Scan QRIS Queejuy Coffee</p>
-                            <img src="<?= base_url('images/qris_code.png') ?>" class="img-fluid rounded-3 mb-2" style="max-width: 150px;">
-                            <p class="small fw-bold text-primary m-0">QUEEJUY COFFEE HUB</p>
+                        <div id="qrisSection" class="mb-3 p-3 border rounded-4 d-none bg-light" style="border: 2px dashed #ffc107 !important;">
+                            <p class="small text-muted mb-2 text-center">Scan QRIS Queejuy Coffee</p>
+                            
+                            <div class="d-flex justify-content-center align-items-center" style="min-height: 170px;">
+                                <img src="<?= base_url('assets/image/qris.png') ?>" 
+                                     class="img-fluid rounded-3 shadow-sm" 
+                                     style="max-width: 160px; background: white; padding: 10px; display: block;"
+                                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                                
+                                <div class="alert alert-danger small d-none m-0">
+                                    Gagal memuat qris.png<br>Cek folder: public/assets/image/
+                                </div>
+                            </div>
+                            
+                            <p class="small fw-bold text-primary m-0 mt-2 text-center">QUEEJUY COFFEE HUB</p>
                         </div>
 
                         <button type="submit" class="btn btn-warning w-100 py-3 rounded-pill fw-bold shadow">
@@ -140,16 +148,17 @@
     .coffee-card { transition: all 0.3s ease; }
     .coffee-card:hover { transform: translateY(-8px); }
     .fab-cart { position: fixed; bottom: 30px; right: 30px; width: 65px; height: 65px; z-index: 1050; border: 4px solid #1a1d20; transition: transform 0.2s ease; }
-    .btn-check:checked + .btn-outline-dark { background-color: #212529; color: white; }
-    .btn-check:checked + .btn-outline-primary { background-color: #0d6efd; color: white; }
+    .btn-check:checked + .btn-outline-dark { background-color: #212529 !important; color: white !important; border-color: #212529 !important; }
+    .btn-check:checked + .btn-outline-primary { background-color: #0d6efd !important; color: white !important; border-color: #0d6efd !important; }
     .grayscale { filter: grayscale(1); }
+    .cart-bump { transform: scale(1.2); }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Search & Filter Logic (Tetap)
         const searchInput = document.getElementById('menuSearch');
         const menuItems = document.querySelectorAll('.menu-item');
+        
         searchInput.addEventListener('input', function() {
             const query = this.value.toLowerCase();
             menuItems.forEach(item => {
@@ -170,17 +179,17 @@
             });
         });
 
-        // Toggle QRIS
-        const methodRadios = document.querySelectorAll('input[name="metode_pembayaran"]');
-        methodRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const qris = document.getElementById('qrisSection');
-                if(qris) qris.classList.toggle('d-none', e.target.value !== 'qris');
-            });
-        });
-
         updateModalData();
     });
+
+    function toggleQRIS(show) {
+        const qris = document.getElementById('qrisSection');
+        if(show) {
+            qris.classList.remove('d-none');
+        } else {
+            qris.classList.add('d-none');
+        }
+    }
 
     function addToCart(id) {
         if ("<?= $userRole ?>" === "admin") return;
@@ -191,17 +200,16 @@
             if(data.status === 'success') {
                 updateModalData();
                 const btnCart = document.getElementById('btnCartFloating');
-                if(btnCart) {
-                    btnCart.classList.add('cart-bump');
-                    setTimeout(() => btnCart.classList.remove('cart-bump'), 400);
-                }
+                btnCart.classList.add('cart-bump');
+                setTimeout(() => btnCart.classList.remove('cart-bump'), 400);
             }
         });
     }
 
     function openCartModal() {
         updateModalData();
-        new bootstrap.Modal(document.getElementById('cartModal')).show();
+        const modal = new bootstrap.Modal(document.getElementById('cartModal'));
+        modal.show();
     }
 
     function updateModalData() {
@@ -212,17 +220,15 @@
         .then(data => {
             const container = document.getElementById('cartItemsContainer');
             const badge = document.getElementById('cartBadge');
-            if(!container) return;
-
+            
             container.innerHTML = '';
             if (!data.cart || data.cart.length === 0) {
                 container.innerHTML = '<div class="text-center text-muted p-4">Keranjang Kosong</div>';
-                if(badge) badge.classList.add('d-none');
+                badge.classList.add('d-none');
             } else {
-                if(badge) {
-                    badge.classList.remove('d-none');
-                    badge.innerText = data.cart.length;
-                }
+                badge.classList.remove('d-none');
+                badge.innerText = data.cart.length;
+                
                 data.cart.forEach(item => {
                     container.innerHTML += `
                         <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded-3 text-dark border-start border-warning border-4 shadow-sm">

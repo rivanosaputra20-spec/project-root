@@ -69,16 +69,47 @@
             <label class="small text-muted mb-3">Metode Pembayaran</label>
             <div class="row g-2 mb-4">
                 <div class="col-6">
-                    <button class="btn btn-outline-warning w-100 py-3 active btn-pay" onclick="setMetode('QRIS', this)"><i class="fas fa-qrcode d-block mb-2"></i> QRIS</button>
+                    <button id="btn-qris" class="btn btn-outline-warning w-100 py-3 active btn-pay" onclick="setMetode('QRIS', this)"><i class="fas fa-qrcode d-block mb-2"></i> QRIS</button>
                 </div>
                 <div class="col-6">
-                    <button class="btn btn-outline-warning w-100 py-3 btn-pay" onclick="setMetode('Tunai', this)"><i class="fas fa-money-bill-wave d-block mb-2"></i> Tunai</button>
+                    <button id="btn-tunai" class="btn btn-outline-warning w-100 py-3 btn-pay" onclick="setMetode('Tunai', this)"><i class="fas fa-money-bill-wave d-block mb-2"></i> Tunai</button>
                 </div>
             </div>
 
-            <button class="btn btn-warning w-100 fw-bold py-3 rounded-pill shadow" onclick="prosesBayar()">
+            <button class="btn btn-warning w-100 fw-bold py-3 rounded-pill shadow" onclick="tampilkanKonfirmasi()">
                 PLACE ORDER <i class="fas fa-paper-plane ms-2"></i>
             </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalBayar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold text-warning">Konfirmasi Pembayaran</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <h6 class="mb-3">Total Tagihan: <span id="modal-total" class="text-warning fw-bold"></span></h6>
+                
+                <div id="qris-container" style="display: none;">
+                    <p class="small text-muted">Silahkan scan kode QRIS di bawah ini:</p>
+                    <div class="bg-white p-3 d-inline-block rounded-3 mb-3">
+                        <img src="<?= base_url('assets/images/qris.png') ?>" alt="QRIS Code" style="width: 200px; height: 200px;">
+                    </div>
+                    <h6 class="fw-bold">QUEEJUY COFFEE HUB</h6>
+                </div>
+
+                <div id="tunai-info" style="display: none;">
+                    <i class="fas fa-money-bill-wave fa-4x text-success mb-3"></i>
+                    <p>Silahkan terima pembayaran tunai dari pelanggan.</p>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-warning fw-bold rounded-pill px-4" onclick="prosesBayar()">CETAK STRUK & SELESAI <i class="fas fa-print ms-2"></i></button>
+            </div>
         </div>
     </div>
 </div>
@@ -86,7 +117,7 @@
 <div id="nota-print" class="d-none">
     <div style="width: 80mm; font-family: 'Courier New', Courier, monospace; padding: 10px; color: black !important; background: white !important;">
         <div style="text-align: center;">
-            <h3 style="margin: 0;">KOPI KITA</h3>
+            <h3 style="margin: 0;">QUEEJUY COFFEE</h3>
             <p style="font-size: 12px;">Bekasi, Indonesia<br>--------------------------------</p>
         </div>
         <div id="nota-info" style="font-size: 12px;"></div>
@@ -94,41 +125,27 @@
         <div id="nota-items" style="font-size: 12px;"></div>
         <p>--------------------------------</p>
         <div id="nota-total" style="font-size: 14px; font-weight: bold;"></div>
+        <div id="nota-metode" style="font-size: 12px; margin-top: 5px;"></div>
         <p style="text-align: center; font-size: 10px; margin-top: 20px;">Terima kasih atas kunjungannya!</p>
     </div>
 </div>
 
 <style>
 @media print {
-    /* Sembunyikan semua elemen di layar utama */
-    body * { 
-        visibility: hidden; 
-    }
-    /* Tampilkan HANYA area nota-print */
-    #nota-print, #nota-print * { 
-        visibility: visible !important; 
-    }
-    /* Atur posisi nota agar berada di pojok kiri atas kertas */
+    body * { visibility: hidden; }
+    #nota-print, #nota-print * { visibility: visible !important; }
     #nota-print { 
-        position: fixed; 
-        left: 0; 
-        top: 0; 
-        width: 80mm; 
-        background-color: white !important;
-        color: black !important;
-        display: block !important;
+        position: fixed; left: 0; top: 0; width: 80mm; 
+        background-color: white !important; color: black !important; display: block !important;
     }
-    /* Menghilangkan header/footer otomatis browser (tanggal & url di pojok kertas) */
-    @page { 
-        size: auto; 
-        margin: 0mm; 
-    }
+    @page { size: auto; margin: 0mm; }
 }
+.btn-pay.active { background-color: #ffc107 !important; color: #000 !important; }
 </style>
 
 <script>
 let keranjang = [];
-let metodeBayar = 'QRIS';
+let metodeBayar = 'QRIS'; // Default
 
 function tambahItem(nama, harga) {
     keranjang.push({nama, harga});
@@ -174,22 +191,35 @@ function setMetode(metode, element) {
     element.classList.add('active');
 }
 
-function prosesBayar() {
+function tampilkanKonfirmasi() {
     if(keranjang.length === 0) return alert('Pilih menu dulu!');
     
-    // Ambil elemen nota
+    const total = document.getElementById('total-akhir').innerText;
+    document.getElementById('modal-total').innerText = total;
+
+    // Logika menampilkan QRIS atau Info Tunai
+    if (metodeBayar === 'QRIS') {
+        document.getElementById('qris-container').style.display = 'block';
+        document.getElementById('tunai-info').style.display = 'none';
+    } else {
+        document.getElementById('qris-container').style.display = 'none';
+        document.getElementById('tunai-info').style.display = 'block';
+    }
+
+    // Munculkan Modal
+    const myModal = new bootstrap.Modal(document.getElementById('modalBayar'));
+    myModal.show();
+}
+
+function prosesBayar() {
     const notaInfo = document.getElementById('nota-info');
     const notaItems = document.getElementById('nota-items');
     const notaTotal = document.getElementById('nota-total');
 
-    if (!notaInfo || !notaItems || !notaTotal) {
-        return alert('Error: Elemen nota tidak ditemukan di HTML!');
-    }
-
     const pelanggan = document.getElementById('customer_id').options[document.getElementById('customer_id').selectedIndex].text;
     const total = document.getElementById('total-akhir').innerText;
 
-    // Isi data
+    // Isi Data Nota
     notaInfo.innerHTML = `Tgl: ${new Date().toLocaleString('id-ID')}<br>Plg: ${pelanggan}`;
     
     let html = '';
@@ -198,11 +228,15 @@ function prosesBayar() {
     });
     notaItems.innerHTML = html;
     notaTotal.innerHTML = `<div style="display:flex; justify-content:space-between; border-top:1px dashed #00; margin-top:5px"><b>TOTAL</b><b>${total}</b></div>`;
+    document.getElementById('nota-metode').innerHTML = `Metode Bayar: ${metodeBayar}`;
 
-    // Munculkan print
-    setTimeout(() => {
-        window.print();
-    }, 500);
+    // Jalankan Print
+    window.print();
+
+    // Reset keranjang setelah bayar (Opsional)
+    // keranjang = [];
+    // updateTampilan();
+    // location.reload(); 
 }
 </script>
 <?= $this->endSection() ?>
